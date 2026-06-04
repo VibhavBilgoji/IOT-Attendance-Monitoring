@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -75,9 +76,27 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   Future<void> _onStartScan(StartScan event, Emitter<BluetoothState> emit) async {
     emit(BluetoothScanning());
     try {
+      if (Platform.isAndroid) {
+        var state = FlutterBluePlus.adapterStateNow;
+        if (state == BluetoothAdapterState.unknown) {
+          state = await FlutterBluePlus.adapterState.where((s) => s != BluetoothAdapterState.unknown).first;
+        }
+        if (state == BluetoothAdapterState.off) {
+          try {
+            await FlutterBluePlus.turnOn();
+          } catch (e) {
+            emit(const BluetoothError("Bluetooth is turned off"));
+            return;
+          }
+        }
+      }
       await _repository.startScan();
     } catch (e) {
-      emit(BluetoothError(e.toString()));
+      if (e is FlutterBluePlusException) {
+        emit(const BluetoothError("Bluetooth is turned off"));
+      } else {
+        emit(BluetoothError(e.toString()));
+      }
     }
   }
 

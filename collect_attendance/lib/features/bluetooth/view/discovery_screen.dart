@@ -87,9 +87,39 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> with SingleTickerProv
               MaterialPageRoute(builder: (_) => const DashboardScreen()),
             );
           } else if (state is BluetoothError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Theme.of(context).colorScheme.error),
-            );
+            if (state.message == "Bluetooth is turned off") {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  icon: const Icon(Icons.bluetooth_disabled, size: 48),
+                  title: const Text('Bluetooth Required'),
+                  content: const Text(
+                    'Bluetooth is currently turned off. The scanner requires Bluetooth to be enabled to connect.',
+                    textAlign: TextAlign.center,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('CANCEL'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        context.read<BluetoothBloc>().add(StartScan());
+                      },
+                      child: const Text('TURN ON'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
