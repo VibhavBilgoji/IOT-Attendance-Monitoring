@@ -29,7 +29,7 @@ class CollectAttendanceApp extends StatelessWidget {
         valueListenable: AppTheme.themeNotifier,
         builder: (context, themeMode, child) {
           return MaterialApp(
-            title: 'Smart Attendance',
+            title: 'RollCall',
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
             theme: AppTheme.lightTheme,
