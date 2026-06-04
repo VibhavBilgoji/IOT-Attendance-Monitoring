@@ -84,7 +84,7 @@ void loop() {
     Bluetooth.listen();
     delay(10); // Let the serial registry stabilize
     Bluetooth.println(currentUID); 
-    delay(10); // Ensure the full buffer pipeline clears out
+    delay(50); // Ensure the full buffer pipeline clears out
     Bluetooth.stopListening(); // Suspend interrupts so SPI can listen smoothly again
     
     triggerSuccess();
