@@ -33,8 +33,8 @@ class StudentModel extends HiveObject {
       fullName: json['full_name'] as String? ?? '',
       rollNumber: json['roll_number'] as String? ?? '',
       rfidUid: json['rfid_uid'] as String,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'] as String) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
     );
   }
