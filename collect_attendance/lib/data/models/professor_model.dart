@@ -26,9 +26,11 @@ class ProfessorModel extends HiveObject {
   factory ProfessorModel.fromJson(Map<String, dynamic> json) {
     return ProfessorModel(
       id: json['id'] as String,
-      fullName: json['full_name'] as String,
+      fullName: json['full_name'] as String? ?? '',
       rfidUid: json['rfid_uid'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String) 
+          : DateTime.now(),
     );
   }
 

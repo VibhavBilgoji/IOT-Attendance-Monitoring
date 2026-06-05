@@ -26,6 +26,7 @@ class LocalDatabase {
   Box<ProfessorModel> get professorsBox => Hive.box<ProfessorModel>(AppConstants.professorsBox);
 
   Future<void> saveProfessors(List<ProfessorModel> professors) async {
+    await professorsBox.clear();
     final Map<String, ProfessorModel> map = {for (var p in professors) p.id: p};
     await professorsBox.putAll(map);
   }
@@ -38,10 +39,15 @@ class LocalDatabase {
     }
   }
 
+  ProfessorModel? getProfessorById(String id) {
+    return professorsBox.get(id);
+  }
+
   // --- Students Cache ---
   Box<StudentModel> get studentsBox => Hive.box<StudentModel>(AppConstants.studentsBox);
 
   Future<void> saveStudents(List<StudentModel> students) async {
+    await studentsBox.clear();
     final Map<String, StudentModel> map = {for (var s in students) s.id: s};
     await studentsBox.putAll(map);
   }
@@ -52,6 +58,10 @@ class LocalDatabase {
     } catch (_) {
       return null;
     }
+  }
+
+  StudentModel? getStudentById(String id) {
+    return studentsBox.get(id);
   }
 
   // --- Lectures ---

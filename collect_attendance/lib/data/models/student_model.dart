@@ -30,10 +30,12 @@ class StudentModel extends HiveObject {
   factory StudentModel.fromJson(Map<String, dynamic> json) {
     return StudentModel(
       id: json['id'] as String,
-      fullName: json['full_name'] as String,
-      rollNumber: json['roll_number'] as String,
+      fullName: json['full_name'] as String? ?? '',
+      rollNumber: json['roll_number'] as String? ?? '',
       rfidUid: json['rfid_uid'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String) 
+          : DateTime.now(),
     );
   }
 

@@ -74,8 +74,10 @@ class LectureBloc extends Bloc<LectureEvent, LectureState> {
 
   Future<void> _onEndLecture(EndLectureEvent event, Emitter<LectureState> emit) async {
     await lectureRepo.endLecture();
+    
+    // Show Submitting Attendance...
     emit(state.copyWith(
-      appState: LectureAppState.completedPendingSync,
+      appState: LectureAppState.syncing,
       clearActiveLecture: true,
       records: [],
     ));
@@ -84,10 +86,11 @@ class LectureBloc extends Bloc<LectureEvent, LectureState> {
     await syncRepo.syncPendingData();
     
     // Check if we have any pending lectures left. If none, we are idle.
-    // If some failed to upload, we might stay in completedPendingSync.
     final pending = lectureRepo.getPendingLectures();
-    if (pending.isEmpty) {
+    if (pending.isEmpty && state.appState != LectureAppState.active) {
       emit(state.copyWith(appState: LectureAppState.idle));
+    } else if (state.appState != LectureAppState.active) {
+      emit(state.copyWith(appState: LectureAppState.completedPendingSync));
     }
   }
 
@@ -104,8 +107,32 @@ class LectureBloc extends Bloc<LectureEvent, LectureState> {
     // If lecture is active, check if a professor is tapping to end it
     final professor = lectureRepo.getProfessorByRfid(event.rfidUid);
     if (professor != null) {
-      // End the lecture if any professor taps their card
-      add(EndLectureEvent());
+      final isDifferentProfessor = state.activeLecture!.professorId != professor.id;
+      
+      if (isDifferentProfessor) {
+        // End current lecture
+        await lectureRepo.endLecture();
+        
+        // Show Submitting Attendance state
+        emit(state.copyWith(
+          appState: LectureAppState.syncing,
+          clearActiveLecture: true,
+          records: [],
+        ));
+        
+        await syncRepo.syncPendingData(); // wait for sync
+        
+        // Start new lecture seamlessly
+        final newLecture = await lectureRepo.startLecture(professorId: professor.id);
+        emit(state.copyWith(
+          appState: LectureAppState.active,
+          activeLecture: newLecture,
+          records: [],
+        ));
+      } else {
+        // Same professor tapping ends their lecture
+        add(EndLectureEvent());
+      }
       return;
     }
 

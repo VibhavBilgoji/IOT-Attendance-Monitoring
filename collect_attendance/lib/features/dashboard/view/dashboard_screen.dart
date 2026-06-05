@@ -6,6 +6,8 @@ import '../bloc/lecture_event.dart';
 import '../bloc/lecture_state.dart';
 import '../widgets/connection_status_bar.dart';
 import '../../../core/theme.dart';
+import '../../../core/service_locator.dart';
+import '../../../data/datasources/local_database.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -35,12 +37,16 @@ class DashboardScreen extends StatelessWidget {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.bluetooth_disabled),
-            onPressed: () {
-              context.read<BluetoothBloc>().add(DisconnectDevice());
-              Navigator.of(context).pushReplacementNamed('/');
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton.filledTonal(
+              icon: const Icon(Icons.bluetooth),
+              tooltip: 'Disconnect Bluetooth',
+              onPressed: () {
+                context.read<BluetoothBloc>().add(DisconnectDevice());
+                Navigator.of(context).pushReplacementNamed('/');
+              },
+            ),
           )
         ],
       ),
@@ -120,13 +126,24 @@ class DashboardScreen extends StatelessWidget {
       case LectureAppState.active:
         cardColor = Theme.of(context).colorScheme.primaryContainer;
         title = 'Lecture Active';
+        if (state.activeLecture?.professorId != null) {
+          final prof = sl<LocalDatabase>().getProfessorById(state.activeLecture!.professorId!);
+          if (prof != null) {
+            title = 'Lecture Active (${prof.fullName})';
+          }
+        }
         subtitle = state.isBluetoothConnected 
             ? 'Scanning for tags...'
             : '⚠️ IOT Connection Lost - Data is safe locally';
         icon = state.isBluetoothConnected ? Icons.sensors : Icons.warning_amber;
         break;
-      case LectureAppState.completedPendingSync:
       case LectureAppState.syncing:
+        cardColor = Theme.of(context).colorScheme.secondaryContainer;
+        title = 'Submitting Attendance...';
+        subtitle = 'Please wait while records are uploaded.';
+        icon = Icons.cloud_sync_outlined;
+        break;
+      case LectureAppState.completedPendingSync:
         cardColor = Theme.of(context).colorScheme.tertiaryContainer;
         title = 'Awaiting Network';
         subtitle = 'Data saved locally. Will sync when online.';
@@ -179,16 +196,19 @@ class DashboardScreen extends StatelessWidget {
       itemCount: sortedRecords.length,
       itemBuilder: (context, index) {
         final record = sortedRecords[index];
+        final student = sl<LocalDatabase>().getStudentById(record.studentId);
+        final displayName = student?.fullName ?? 'Unknown Student';
+        
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: const Icon(Icons.credit_card),
+              child: const Icon(Icons.person),
             ),
-            title: Text('UID: ${record.studentRfidUid}', style: const TextStyle(fontWeight: FontWeight.w600)),
+            title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(
-              '${record.tappedAt.hour.toString().padLeft(2, '0')}:${record.tappedAt.minute.toString().padLeft(2, '0')}:${record.tappedAt.second.toString().padLeft(2, '0')}',
+              'UID: ${record.studentRfidUid} • ${record.tappedAt.hour.toString().padLeft(2, '0')}:${record.tappedAt.minute.toString().padLeft(2, '0')}:${record.tappedAt.second.toString().padLeft(2, '0')}',
             ),
             trailing: Icon(
               record.isSynced ? Icons.cloud_done : Icons.cloud_off,
